@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Список получателей{% endblock %}
+
+{% block content %}
+<h1>Список получателей</h1>
+<ul class="list-group">
+    {% for recipient in recipients %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ recipient.full_name }} ({{ recipient.email }})
+            <div>
+                <a href="{% url 'recipient_update' recipient.pk %}" class="btn btn-warning btn-sm">Редактировать</a>
+                <a href="{% url 'recipient_delete' recipient.pk %}" class="btn btn-danger btn-sm">Удалить</a>
+            </div>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}
