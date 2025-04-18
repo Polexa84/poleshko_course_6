@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Список сообщений{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Список сообщений</h1>
+    <a href="{% url 'postal_service:message_create' %}" class="btn btn-primary mb-3">Добавить сообщение</a>
+    <ul class="list-group">
+        {% for message in messages %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ message.subject }}
+                <div>
+                    <a href="{% url 'postal_service:message_update' message.pk %}" class="btn btn-warning btn-sm">Редактировать</a>
+                    <a href="{% url 'postal_service:message_delete' message.pk %}" class="btn btn-danger btn-sm">Удалить</a>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

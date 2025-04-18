@@ -1,9 +1,12 @@
+# mailing/urls.py
 from django.urls import path
-from .views import recipient_list, recipient_create, recipient_update, recipient_delete
+from . import views
+
+app_name = 'mailing'
 
 urlpatterns = [
-    path('', recipient_list, name='recipient_list'),
-    path('create/', recipient_create, name='recipient_create'),
-    path('update/<int:pk>/', recipient_update, name='recipient_update'),
-    path('delete/<int:pk>/', recipient_delete, name='recipient_delete'),
+    path('', views.recipient_list, name='recipient_list'),
+    path('create/', views.recipient_create, name='recipient_create'),
+    path('<int:pk>/update/', views.recipient_update, name='recipient_update'),
+    path('<int:pk>/delete/', views.recipient_delete, name='recipient_delete'),
 ]
