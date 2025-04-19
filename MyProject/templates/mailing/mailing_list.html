@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="mb-4">Список рассылок (Всего: {{ mailings|length }})</h1>
+  <h1 class="mb-4">Список рассылок (Всего: {{ mailings|length }})</h1>
     <a href="{% url 'mailing:mailing_create' %}" class="btn btn-primary mb-3">  {# Используем namespace #}
       <i class="fas fa-plus"></i> Создать рассылку
     </a>
@@ -26,6 +26,7 @@
           <td>
             <a href="{% url 'mailing:mailing_update' mailing.pk %}" class="btn btn-sm btn-warning">Редактировать</a>
             <a href="{% url 'mailing:mailing_delete' mailing.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+            <a href="{% url 'mailing:send_mailing' mailing.pk %}" class="btn btn-sm btn-success">Отправить сейчас</a>
           </td>
         </tr>
       {% endfor %}

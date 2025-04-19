@@ -15,4 +15,5 @@ urlpatterns = [
     path('mailings/create/', views.mailing_create, name='mailing_create'),  # Создание рассылки
     path('mailings/<int:pk>/update/', views.mailing_update, name='mailing_update'),  # Редактирование рассылки
     path('mailings/<int:pk>/delete/', views.mailing_delete, name='mailing_delete'),  # Удаление рассылки
+    path('mailings/<int:pk>/send/', views.send_mailing, name='send_mailing'),  # Отправка рассылки
 ]

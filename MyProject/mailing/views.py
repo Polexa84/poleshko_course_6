@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Recipient, Mailing
 from .forms import RecipientForm, MailingForm
+from .tasks import send_mailing_task  # Import the Celery task
 
 # Recipient Views
 def recipient_list(request):
@@ -76,3 +77,20 @@ def mailing_delete(request, pk):
         mailing.delete()
         return redirect('mailing:mailing_list')  # Use namespace
     return render(request, 'mailing/mailing_confirm_delete.html', {'mailing': mailing})
+
+def send_mailing(request, pk):
+    """Отправляет рассылку по требованию."""
+    mailing = get_object_or_404(Mailing, pk=pk)
+
+    # Check if the mailing is already sent or completed
+    if mailing.status != 'completed':
+        # Launch the Celery task to send the mailing
+        send_mailing_task.delay(mailing.pk)
+
+        mailing.status = 'started'
+        mailing.save()
+
+        return redirect('mailing:mailing_list')  # Redirect to the mailing list page
+    else:
+        # Handle the situation when the mailing has already been sent
+        return render(request, 'mailing/mailing_already_sent.html', {'mailing': mailing})
