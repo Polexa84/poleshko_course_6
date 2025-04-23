@@ -6,73 +6,86 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
-from django.utils.crypto import get_random_string
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            user.is_active = False
-            user.activation_key = get_random_string(32)
+            user = form.save(commit=False)
+            user.is_active = False  # Пользователь неактивен до подтверждения
             user.save()
 
-            subject = 'Подтверждение регистрации'
-            message = f'Здравствуйте!  Для подтверждения регистрации перейдите по ссылке: {request.build_absolute_uri(reverse("users:confirm_email", args=[user.activation_key]))}'
-            from_email = settings.DEFAULT_FROM_EMAIL
-            to_email = [form.cleaned_data['email']]
-            send_mail(subject, message, from_email, to_email, fail_silently=False)
+            # Генерируем токен и uid для подтверждения email
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-            # messages.success(request, 'На ваш email отправлено письмо для подтверждения регистрации.')
-            # return redirect('home')
-            return render(request, 'users/registration_success.html', {'email': form.cleaned_data['email']})
-        else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
+            # Ссылка для подтверждения email
+            activation_url = request.build_absolute_uri(
+                reverse("users:confirm_email", args=[uid, token])
+            )
+
+            # Отправка письма с ссылкой для подтверждения регистрации
+            subject = 'Подтверждение регистрации'
+            message = f'Для подтверждения email перейдите по ссылке:\n{activation_url}'
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+
+            messages.success(request, 'Письмо для подтверждения регистрации отправлено на ваш email.')
+            return redirect('login')  # Перенаправление после успешной регистрации
+
     else:
-        form = RegisterForm()
+        form = RegisterForm()  # Инициализация формы для GET-запросов
+
     return render(request, 'users/register.html', {'form': form})
 
-
-def confirm_email(request, token):
+def confirm_email(request, uidb64, token):
     try:
-        user = User.objects.get(activation_key=token)
-    except User.DoesNotExist:
-        messages.error(request, 'Неверный токен подтверждения.')
-        return redirect('home')
+        # Декодируем uidb64 и получаем ID пользователя
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
 
-    if not user.is_active:
-        user.is_active = True
-        user.activation_key = None
-        user.save()
-        messages.success(request, 'Ваш email успешно подтвержден. Теперь вы можете войти.')
-        return redirect('login')
-    else:
-        messages.info(request, 'Ваш email уже был подтвержден.')
-        return redirect('home')
+        # Проверяем токен на валидность
+        if default_token_generator.check_token(user, token):
+            if not user.is_active:
+                user.is_active = True  # Активируем аккаунт пользователя
+                user.save()
+                messages.success(request, 'Email подтверждён! Теперь можно войти.')
+                return redirect('login')
+            else:
+                messages.info(request, 'Ваш аккаунт уже активирован.')
+        else:
+            messages.error(request, 'Неверная ссылка подтверждения.')
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        messages.error(request, 'Ошибка активации. Неверный токен или пользователь.')
 
+    return redirect('home')
 
 def login_view(request):
     if request.method == 'POST':
-        form = LoginForm(request, data=request.POST)
+        form = LoginForm(request=request, data=request.POST)  # Исправлено здесь
         if form.is_valid():
             user = authenticate(request, username=form.cleaned_data['username'], password=form.cleaned_data['password'])
             if user is not None:
                 login(request, user)
                 return redirect('home')
             else:
-                form.add_error(None, form.error_messages['invalid_login'])
+                messages.error(request, 'Неверное имя пользователя или пароль.')
         else:
-             for field, errors in form.errors.items():
+            for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
 
-    else:
-        form = LoginForm()
-    return render(request, 'users/login.html', {'form': form})
+    else:  # Этот else должен быть правильно выровнен
+        form = LoginForm()  # Инициализация формы для GET-запросов
 
+    return render(request, 'users/login.html', {'form': form})
 
 def logout_view(request):
     logout(request)
+    messages.success(request, 'Вы вышли из системы.')  # Сообщение об успешном выходе
     return redirect('home')

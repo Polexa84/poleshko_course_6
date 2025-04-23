@@ -7,5 +7,5 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('confirm_email/<str:token>/', views.confirm_email, name='confirm_email'),  # Добавь эту строку
+    path('confirm_email/<str:uidb64>/<str:token>/', views.confirm_email, name='confirm_email')
 ]

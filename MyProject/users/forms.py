@@ -26,7 +26,9 @@ class LoginForm(AuthenticationForm):
             "Пожалуйста, введите правильные имя пользователя и пароль. "
             "Оба поля могут быть чувствительны к регистру."
         ),
+        'inactive': _("Ваш аккаунт не активирован. Пожалуйста, проверьте свою почту для подтверждения."),
     }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
