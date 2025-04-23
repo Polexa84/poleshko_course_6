@@ -1,128 +1,127 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Recipient, Mailing, MailingAttempt  # Убедитесь, что MailingAttempt импортирован
+from django.contrib import messages
+from django.utils import timezone
+from .models import Recipient, Mailing, MailingAttempt
 from .forms import RecipientForm, MailingForm
-from .tasks import send_mailing_task  # Импортируйте Celery задачу
+from .tasks import send_mailing_task
 
 
-# Главная страница
 def home(request):
-    total_mailings = Mailing.objects.count()
-    active_mailings = Mailing.objects.filter(status='running').count()
-    unique_recipients = Recipient.objects.distinct().count()
-
+    """Главная страница со статистикой"""
     context = {
-        'total_mailings': total_mailings,
-        'active_mailings': active_mailings,
-        'unique_recipients': unique_recipients,
+        'total_mailings': Mailing.objects.count(),
+        'active_mailings': Mailing.objects.filter(status='running').count(),
+        'unique_recipients': Recipient.objects.distinct().count(),
     }
     return render(request, 'home.html', context)
 
 
-# Mailing Attempts View
 def mailing_attempts(request, mailing_id):
-    """
-    View для отображения попыток рассылки для конкретной рассылки.
-    """
+    """Просмотр попыток отправки для конкретной рассылки"""
     mailing = get_object_or_404(Mailing, pk=mailing_id)
-    attempts = MailingAttempt.objects.filter(mailing=mailing).order_by('-attempt_time')
-    return render(request, 'mailing/mailing_attempts.html', {'mailing': mailing, 'attempts': attempts})
+    attempts = mailing.attempts.all().order_by('-timestamp')
+    return render(request, 'mailing/mailing_attempts.html', {
+        'mailing': mailing,
+        'attempts': attempts
+    })
 
 
-# Recipient Views
+# Recipient CRUD Views
 def recipient_list(request):
-    """Отображает список получателей."""
     recipients = Recipient.objects.all()
     return render(request, 'mailing/recipient_list.html', {'recipients': recipients})
 
 
 def recipient_create(request):
-    """Создает нового получателя."""
     if request.method == 'POST':
         form = RecipientForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('mailing:recipient_list')  # Используйте пространство имен
+            messages.success(request, 'Получатель успешно создан')
+            return redirect('mailing:recipient_list')
     else:
         form = RecipientForm()
     return render(request, 'mailing/recipient_form.html', {'form': form})
 
 
 def recipient_update(request, pk):
-    """Редактирует существующего получателя."""
     recipient = get_object_or_404(Recipient, pk=pk)
     if request.method == 'POST':
         form = RecipientForm(request.POST, instance=recipient)
         if form.is_valid():
             form.save()
-            return redirect('mailing:recipient_list')  # Используйте пространство имен
+            messages.success(request, 'Получатель успешно обновлён')
+            return redirect('mailing:recipient_list')
     else:
         form = RecipientForm(instance=recipient)
     return render(request, 'mailing/recipient_form.html', {'form': form})
 
 
 def recipient_delete(request, pk):
-    """Удаляет получателя."""
     recipient = get_object_or_404(Recipient, pk=pk)
     if request.method == 'POST':
         recipient.delete()
-        return redirect('mailing:recipient_list')  # Используйте пространство имен
+        messages.success(request, 'Получатель успешно удалён')
+        return redirect('mailing:recipient_list')
     return render(request, 'mailing/recipient_confirm_delete.html', {'recipient': recipient})
 
 
-# Mailing Views
+# Mailing CRUD Views
 def mailing_list(request):
-    """Отображает список рассылок."""
-    mailings = Mailing.objects.all()
+    mailings = Mailing.objects.all().order_by('-created_at')
     return render(request, 'mailing/mailing_list.html', {'mailings': mailings})
 
 
 def mailing_create(request):
-    """Создает новую рассылку."""
     if request.method == 'POST':
         form = MailingForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('mailing:mailing_list')  # Используйте пространство имен
+            mailing = form.save()
+            messages.success(request, 'Рассылка успешно создана')
+            return redirect('mailing:mailing_list')
     else:
         form = MailingForm()
     return render(request, 'mailing/mailing_form.html', {'form': form})
 
 
 def mailing_update(request, pk):
-    """Редактирует существующую рассылку."""
     mailing = get_object_or_404(Mailing, pk=pk)
     if request.method == 'POST':
         form = MailingForm(request.POST, instance=mailing)
         if form.is_valid():
             form.save()
-            return redirect('mailing:mailing_list')  # Используйте пространство имен
+            messages.success(request, 'Рассылка успешно обновлена')
+            return redirect('mailing:mailing_list')
     else:
         form = MailingForm(instance=mailing)
     return render(request, 'mailing/mailing_form.html', {'form': form})
 
 
 def mailing_delete(request, pk):
-    """Удаляет рассылку."""
     mailing = get_object_or_404(Mailing, pk=pk)
     if request.method == 'POST':
         mailing.delete()
-        return redirect('mailing:mailing_list')  # Используйте пространство имен
+        messages.success(request, 'Рассылка успешно удалена')
+        return redirect('mailing:mailing_list')
     return render(request, 'mailing/mailing_confirm_delete.html', {'mailing': mailing})
 
 
 def send_mailing(request, pk):
-    """Отправляет рассылку по требованию."""
+    """Запуск рассылки с проверкой статуса"""
     mailing = get_object_or_404(Mailing, pk=pk)
 
-    # Проверяем статус рассылки
-    if mailing.status != 'completed':
-        # Запускаем Celery задачу для отправки рассылки
-        send_mailing_task.delay(mailing.pk)
+    if mailing.status == 'completed':
+        messages.warning(request, 'Эта рассылка уже была отправлена')
+        return redirect('mailing:mailing_list')
 
-        mailing.status = 'started'
-        mailing.save()
+    if mailing.status == 'running':
+        messages.warning(request, 'Эта рассылка уже выполняется')
+        return redirect('mailing:mailing_list')
 
-        return redirect('mailing:mailing_list')  # Перенаправляем на страницу списка рассылок
-    else:
-        # Обрабатываем ситуацию с уже отправленной рассылкой
-        return render(request, 'mailing/mailing_already_sent.html', {'mailing': mailing})
+    # Запускаем асинхронную задачу
+    send_mailing_task.delay(mailing.pk)
+    mailing.status = 'running'
+    mailing.save()
+
+    messages.success(request, 'Рассылка успешно запущена')
+    return redirect('mailing:mailing_list')

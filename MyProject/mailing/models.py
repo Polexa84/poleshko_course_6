@@ -30,6 +30,7 @@ class Mailing(models.Model):
         default='created',
         verbose_name='Статус'
     )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     message = models.ForeignKey(Message, on_delete=models.CASCADE, verbose_name='Сообщение')
     recipients = models.ManyToManyField(Recipient, verbose_name='Получатели')
 
