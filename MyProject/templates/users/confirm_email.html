@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h2>Подтверждение email</h2>
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+        <p>
+          {% if validlink %}
+            Ваш email успешно подтвержден. Теперь вы можете <a href="{% url 'login' %}">войти</a>.
+          {% else %}
+            Неверная ссылка для подтверждения email.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+{% endblock %}
