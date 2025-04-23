@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Попытки рассылки для {{ mailing }}{% endblock %}
+
+{% block content %}
+    <h1>Попытки рассылки для {{ mailing }}</h1>
+    <p>Рассылка начата: {{ mailing.start_time }}</p>
+    <p>Рассылка закончена: {{ mailing.end_time }}</p>
+
+    <h2>Список попыток ({{ attempts|length }}):</h2>  {# Добавлено attempts|length #}
+
+    <table class="table">  {# Убрано {% if attempts %} #}
+        <thead>
+            <tr>
+                <th>Дата и время</th>
+                <th>Статус</th>
+                <th>Ответ сервера</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attempt in attempts %}
+                <tr>
+                    <td>{{ attempt.attempt_time }}</td>
+                    <td>{{ attempt.get_status_display }}</td>
+                    <td>{{ attempt.server_response }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>  {# Убрано {% else %} и {% endif %} #}
+
+    <p>Пока нет попыток для этой рассылки.</p> {# Оставлено, чтобы увидеть, если что-то сломалось #}
+    <a href="{% url 'mailing:mailing_list' %}" class="btn btn-secondary">Назад к списку рассылок</a>
+{% endblock %}

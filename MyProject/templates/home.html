@@ -5,4 +5,11 @@
 {% block content %}
     <h1>Сайт РассылкOff</h1>
     <p>Добро пожаловать на сайт для управления рассылками!</p>
+
+    <h2>Статистика рассылок</h2>
+    <div class="stats">
+        <p>Всего рассылок: {{ total_mailings }}</p>
+        <p>Активных рассылок: {{ active_mailings }}</p>
+        <p>Уникальных получателей: {{ unique_recipients }}</p>
+    </div>
 {% endblock %}
