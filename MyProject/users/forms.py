@@ -1,12 +1,18 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import (
+    UserCreationForm,
+    AuthenticationForm,
+    PasswordResetForm,
+    SetPasswordForm  # Новый импорт
+)
 from django.utils.translation import gettext_lazy as _
 
+
 class RegisterForm(UserCreationForm):
-    email = forms.EmailField(label="Email", required=True)  # Добавляем поле email
+    email = forms.EmailField(label="Email", required=True)
 
     class Meta(UserCreationForm.Meta):
-        fields = UserCreationForm.Meta.fields + ('email',)  # Добавляем email в список полей
+        fields = UserCreationForm.Meta.fields + ('email',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -17,8 +23,9 @@ class RegisterForm(UserCreationForm):
         'password_too_short': _("Ваш пароль слишком короткий."),
         'password_too_common': _("Ваш пароль слишком распространен."),
         'password_entirely_numeric': _("Ваш пароль не может состоять только из цифр."),
-        'invalid_email': _("Введите правильный адрес электронной почты.") #Добавляем своё сообщение
+        'invalid_email': _("Введите правильный адрес электронной почты.")
     }
+
 
 class LoginForm(AuthenticationForm):
     error_messages = {
@@ -33,3 +40,26 @@ class LoginForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': 'form-control'})
+
+
+class CustomPasswordResetForm(PasswordResetForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs.update({'class': 'form-control'})
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': 'form-control',
+                'placeholder': field.label
+            })
+
+    error_messages = {
+        'password_mismatch': _("Пароли не совпадают."),
+        'password_too_short': _("Пароль слишком короткий."),
+        'password_too_common': _("Пароль слишком распространен."),
+        'password_entirely_numeric': _("Пароль не может состоять только из цифр."),
+    }

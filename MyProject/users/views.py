@@ -10,6 +10,37 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth import get_user_model
+from .forms import CustomPasswordResetForm
+from django.contrib.auth.views import PasswordResetView
+from django.urls import reverse
+
+class MyPasswordResetView(PasswordResetView):
+    form_class = CustomPasswordResetForm
+    template_name = 'users/password_reset_form.html'
+    success_url = '/users/password_reset/done/'
+
+    def form_valid(self, form):
+        opts = {
+            'use_https': self.request.is_secure(),
+            'token_generator': self.token_generator,
+            'from_email': self.get_email_from(),
+            'request': self.request,
+            'html_email_template_name': 'users/password_reset_email.html',  # Указываем HTML шаблон
+            'email_template_name': 'users/password_reset_email.txt',  # Указываем TXT шаблон (если есть)
+            'extra_email_context': { # Добавляем extra_email_context
+                'reset_url': self.request.build_absolute_uri(
+                    reverse(
+                        'users:password_reset_confirm',
+                        kwargs={'uidb64': form.request.POST['email'].encode(), 'token': form.token_generator.make_token(self.request.user)}
+                    )
+                )
+            }
+        }
+        form.save(**opts)
+        return super().form_valid(form)
+
+    def get_email_from(self):
+        return settings.DEFAULT_FROM_EMAIL
 
 User = get_user_model()
 
