@@ -18,5 +18,5 @@ urlpatterns = [
     path('mailings/<int:pk>/send/', views.send_mailing, name='send_mailing'),  # Отправка рассылки
 
     # Mailing Attempts URL
-    path('mailings/<int:mailing_id>/attempts/', views.mailing_attempts, name='mailing_attempts'),  # Попытки рассылки
+    path('mailings/<int:pk>/attempts/', views.mailing_attempts, name='mailing_attempts'),  # Попытки рассылки
 ]

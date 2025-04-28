@@ -1,15 +1,55 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if form.instance.pk %}Редактировать{% else %}Добавить{% endif %} сообщение{% endblock %}
+{% block title %}{% if form.instance.pk %}Редактировать{% else %}Создать{% endif %} сообщение{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1>{% if form.instance.pk %}Редактировать{% else %}Добавить{% endif %} сообщение</h1>
+    <h1 class="mb-4">{% if form.instance.pk %}Редактировать{% else %}Создать{% endif %} сообщение</h1>
+
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-success">Сохранить</button>
-        <a href="{% url 'postal_service:message_list' %}" class="btn btn-secondary">Назад к списку</a>
+
+        <!-- Поле "Тема" -->
+        <div class="mb-3">
+            <label for="{{ form.subject.id_for_label }}" class="form-label">
+                {{ form.subject.label }}
+            </label>
+            {{ form.subject }}
+            {% if form.subject.help_text %}
+            <div class="form-text">{{ form.subject.help_text }}</div>
+            {% endif %}
+            {% if form.subject.errors %}
+            <div class="alert alert-danger mt-1">
+                {{ form.subject.errors|join:", " }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Поле "Текст" -->
+        <div class="mb-4">
+            <label for="{{ form.body.id_for_label }}" class="form-label">
+                {{ form.body.label }}
+            </label>
+            {{ form.body }}
+            {% if form.body.help_text %}
+            <div class="form-text">{{ form.body.help_text }}</div>
+            {% endif %}
+            {% if form.body.errors %}
+            <div class="alert alert-danger mt-1">
+                {{ form.body.errors|join:", " }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Кнопки -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save me-1"></i> Сохранить
+            </button>
+            <a href="{% url 'postal_service:message_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Назад к списку
+            </a>
+        </div>
     </form>
 </div>
 {% endblock %}

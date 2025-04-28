@@ -3,16 +3,17 @@ from .models import Message
 from .forms import MessageForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.contrib import messages as django_messages  # Переименовываем для ясности
 from users.utils import is_manager
 
 @login_required
 def message_list(request):
     """Отображает список сообщений."""
     if is_manager(request.user):
-        messages = Message.objects.all()
+        message_list = Message.objects.all()  # Переименовываем переменную
     else:
-        messages = Message.objects.filter(owner=request.user)
-    return render(request, 'postal_service/message_list.html', {'messages': messages})
+        message_list = Message.objects.filter(owner=request.user)
+    return render(request, 'postal_service/message_list.html', {'message_list': message_list})
 
 @login_required
 def message_create(request):
@@ -23,6 +24,7 @@ def message_create(request):
             message = form.save(commit=False)
             message.owner = request.user
             message.save()
+            django_messages.success(request, 'Сообщение успешно создано')  # Используем переименованное
             return redirect('postal_service:message_list')
     else:
         form = MessageForm()
@@ -34,7 +36,7 @@ def message_update(request, pk):
     message = get_object_or_404(Message, pk=pk)
 
     if is_manager(request.user):
-        messages.error(request, 'Менеджеры не могут редактировать сообщения')
+        django_messages.error(request, 'Менеджеры не могут редактировать сообщения')  # Используем переименованное
         return redirect('postal_service:message_list')
 
     if message.owner != request.user:
@@ -44,6 +46,7 @@ def message_update(request, pk):
         form = MessageForm(request.POST, instance=message)
         if form.is_valid():
             form.save()
+            django_messages.success(request, 'Сообщение успешно обновлено')  # Используем переименованное
             return redirect('postal_service:message_list')
     else:
         form = MessageForm(instance=message)
@@ -55,7 +58,7 @@ def message_delete(request, pk):
     message = get_object_or_404(Message, pk=pk)
 
     if is_manager(request.user):
-        messages.error(request, 'Менеджеры не могут удалять сообщения')
+        django_messages.error(request, 'Менеджеры не могут удалять сообщения')  # Используем переименованное
         return redirect('postal_service:message_list')
 
     if message.owner != request.user:
@@ -63,5 +66,6 @@ def message_delete(request, pk):
 
     if request.method == 'POST':
         message.delete()
+        django_messages.success(request, 'Сообщение успешно удалено')  # Используем переименованное
         return redirect('postal_service:message_list')
     return render(request, 'postal_service/message_confirm_delete.html', {'message': message})
