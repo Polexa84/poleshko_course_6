@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from mailing.models import Mailing
 from mailing.tasks import send_mailing_task  # Импортируем celery-таску
 
+
 class Command(BaseCommand):
     help = 'Отправляет рассылку по ID'
 
