@@ -3,31 +3,49 @@
 {% block title %}Попытки рассылки для {{ mailing }}{% endblock %}
 
 {% block content %}
-    <h1>Попытки рассылки для {{ mailing }}</h1>
-    <p>Рассылка начата: {{ mailing.start_time }}</p>
-    <p>Рассылка закончена: {{ mailing.end_time }}</p>
+    <div class="container">
+        <h1>Попытки рассылки для {{ mailing }}</h1>
+        <p>Рассылка начата: {{ mailing.start_time }}</p>
+        <p>Рассылка закончена: {{ mailing.end_time }}</p>
+        <p>Всего получателей: {{ mailing.recipients.count }}</p>
 
-    <h2>Список попыток ({{ attempts|length }}):</h2>  {# Добавлено attempts|length #}
+        <h2>Список попыток ({{ attempts|length }}):</h2>
 
-    <table class="table">  {# Убрано {% if attempts %} #}
-        <thead>
-            <tr>
-                <th>Дата и время</th>
-                <th>Статус</th>
-                <th>Ответ сервера</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for attempt in attempts %}
-                <tr>
-                    <td>{{ attempt.attempt_time }}</td>
-                    <td>{{ attempt.get_status_display }}</td>
-                    <td>{{ attempt.server_response }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>  {# Убрано {% else %} и {% endif %} #}
+        {% if attempts %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Дата и время</th>
+                        <th>Статус</th>
+                        <th>Ответ сервера</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attempt in attempts %}
+                        <tr>
+                            <td>{{ attempt.attempt_time }}</td>
+                            <td>
+                                {% if attempt.status == 'success' %}
+                                    <span class="text-success">{{ attempt.get_status_display }}</span>
+                                {% else %}
+                                    <span class="text-danger">{{ attempt.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if attempt.status == 'failed' %}
+                                    <span class="text-danger">{{ attempt.server_response }}</span>
+                                {% else %}
+                                    {{ attempt.server_response }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Пока нет попыток для этой рассылки.</p>
+        {% endif %}
 
-    <p>Пока нет попыток для этой рассылки.</p> {# Оставлено, чтобы увидеть, если что-то сломалось #}
-    <a href="{% url 'mailing:mailing_list' %}" class="btn btn-secondary">Назад к списку рассылок</a>
+        <a href="{% url 'mailing:mailing_list' %}" class="btn btn-secondary">Назад к списку рассылок</a>
+    </div>
 {% endblock %}

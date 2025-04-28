@@ -6,10 +6,81 @@
     <h1>Сайт РассылкOff</h1>
     <p>Добро пожаловать на сайт для управления рассылками!</p>
 
-    <h2>Статистика рассылок</h2>
-    <div class="stats">
-        <p>Всего рассылок: {{ total_mailings }}</p>
-        <p>Активных рассылок: {{ active_mailings }}</p>
-        <p>Уникальных получателей: {{ unique_recipients }}</p>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Основная статистика</h2>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Всего рассылок
+                            <span class="badge bg-primary rounded-pill">{{ total_mailings }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Активных рассылок
+                            <span class="badge bg-success rounded-pill">{{ active_mailings }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Уникальных получателей
+                            <span class="badge bg-info rounded-pill">{{ unique_recipients }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Статистика отправки</h2>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Всего попыток
+                            <span class="badge bg-primary rounded-pill">{{ total_attempts }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Успешных
+                            <span class="badge bg-success rounded-pill">{{ successful_attempts }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Неуспешных
+                            <span class="badge bg-danger rounded-pill">{{ failed_attempts }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Процент успешных
+                            <span class="badge bg-warning rounded-pill">{{ success_rate }}%</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Последние рассылки</h2>
+        </div>
+        <div class="card-body">
+            {% if recent_mailings %}
+                <div class="list-group">
+                    {% for mailing in recent_mailings %}
+                        <a href="{% url 'mailing:mailing_detail' mailing.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">Рассылка #{{ mailing.pk }}</h5>
+                                <small class="text-muted">{{ mailing.created_at|date:"d.m.Y H:i" }}</small>
+                            </div>
+                            <p class="mb-1">Статус: {{ mailing.get_status_display }}</p>
+                            <small>Сообщение: {{ mailing.message.subject|truncatechars:50 }}</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Нет данных о рассылках</p>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}
