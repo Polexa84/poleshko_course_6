@@ -49,31 +49,28 @@ def register(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False  # Пользователь неактивен до подтверждения
+            user.is_active = False
             user.save()
 
-            # Генерируем токен и uid для подтверждения email
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-            # Ссылка для подтверждения email
             activation_url = request.build_absolute_uri(
                 reverse("users:confirm_email", args=[uid, token])
             )
 
-            # Отправка письма с ссылкой для подтверждения регистрации
             subject = 'Подтверждение регистрации'
             message = f'Для подтверждения email перейдите по ссылке:\n{activation_url}'
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
 
-            messages.success(request, 'Письмо для подтверждения регистрации отправлено на ваш email.')
-            return redirect('login')  # Перенаправление после успешной регистрации
+            # Только здесь добавляем сообщение (без дублирования в шаблоне)
+            messages.info(request, 'Письмо для подтверждения регистрации отправлено на ваш email.')
+            return redirect('login')
 
     else:
-        form = RegisterForm()  # Инициализация формы для GET-запросов
+        form = RegisterForm()
 
     return render(request, 'users/register.html', {'form': form})
-
 def confirm_email(request, uidb64, token):
     try:
         # Декодируем uidb64 и получаем ID пользователя
