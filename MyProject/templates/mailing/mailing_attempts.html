@@ -1,86 +1,106 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Попытки рассылки для {{ mailing }}{% endblock %}
+{% load mailing_tags %}
+
+{% block title %}Попытки рассылки {{ mailing.pk }}{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1 class="mb-4">Попытки рассылки: {{ mailing.message.subject }}</h1>
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Попытки рассылки #{{ mailing.pk }}</h1>
+            <p class="lead">Сообщение: {{ mailing.message.subject }}</p>
+        </div>
+    </div>
 
     <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="mb-0">Статистика рассылки</h2>
+        </div>
         <div class="card-body">
-            <div class="d-flex flex-wrap gap-4 mb-3">
-                <div>
-                    <small class="text-muted">Начало:</small>
-                    <div>{{ mailing.start_time }}</div>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Всего попыток</h5>
+                            <p class="card-text display-6">{{ attempts|length }}</p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <small class="text-muted">Окончание:</small>
-                    <div>{{ mailing.end_time }}</div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Успешных</h5>
+                            <p class="card-text display-6 text-success">
+                                {{ attempts|filter_status:"success"|length }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <small class="text-muted">Получателей:</small>
-                    <div>{{ mailing.recipients.count }}</div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Неудачных</h5>
+                            <p class="card-text display-6 text-danger">
+                                {{ attempts|filter_status:"failed"|length }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <small class="text-muted">Статус:</small>
-                    <span class="badge
-                        {% if mailing.status == 'created' %}bg-primary
-                        {% elif mailing.status == 'running' %}bg-warning text-dark
-                        {% elif mailing.status == 'completed' %}bg-success
-                        {% endif %}">
-                        {{ mailing.get_status_display }}
-                    </span>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Успешность</h5>
+                            <p class="card-text display-6">
+                                {% widthratio attempts|filter_status:"success"|length attempts|length 100 %}%
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <h2 class="mb-3">Список попыток ({{ attempts|length }})</h2>
-
-    {% if attempts %}
-    <div class="list-group">
-        {% for attempt in attempts %}
-        <div class="list-group-item">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="d-flex flex-wrap gap-3 align-items-center mb-2">
-                        <div>
-                            <small class="text-muted">Дата:</small>
-                            <span>{{ attempt.attempt_time }}</span>
-                        </div>
-                        <div>
-                            <small class="text-muted">Статус:</small>
-                            <span class="badge
-                                {% if attempt.status == 'success' %}bg-success
-                                {% else %}bg-danger
-                                {% endif %}">
-                                {{ attempt.get_status_display }}
-                            </span>
-                        </div>
-                    </div>
-                    {% if attempt.server_response %}
-                    <div>
-                        <small class="text-muted">Ответ сервера:</small>
-                        <div class="p-2 bg-light rounded">
-                            <code>{{ attempt.server_response }}</code>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0">Детали попыток</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Дата и время</th>
+                            <th>Получатель</th>
+                            <th>Статус</th>
+                            <th>Ответ сервера</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attempt in attempts %}
+                        <tr>
+                            <td>{{ attempt.attempt_time|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                {% if attempt.recipient %}
+                                    {{ attempt.recipient.email }}
+                                {% else %}
+                                    <span class="text-muted">Не указан</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge
+                                    {% if attempt.status == 'success' %}bg-success
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ attempt.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ attempt.server_response|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="alert alert-info">
-        Нет зарегистрированных попыток отправки для этой рассылки.
-    </div>
-    {% endif %}
-
-    <div class="mt-4">
-        <a href="{% url 'mailing:mailing_list' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Назад к списку рассылок
-        </a>
     </div>
 </div>
 {% endblock %}

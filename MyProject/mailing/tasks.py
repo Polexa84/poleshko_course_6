@@ -3,39 +3,47 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from django.conf import settings
 from .models import Mailing, MailingAttempt
-from postal_service.models import Message
 import logging
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
 
-@shared_task(bind=True, retry_backoff=True, max_retries=3)
+@shared_task(bind=True, retry_backoff=True, max_retries=3, autoretry_for=(Exception,))
 def send_mailing_task(self, mailing_pk):
     """
     Улучшенная Celery-таска для отправки рассылки с:
-    - Подробным логированием
-    - Гибкой обработкой ошибок
-    - Корректным обновлением статусов
+    - Атомарными операциями
+    - Детальным логированием
+    - Оптимизированными запросами к БД
+    - Поддержкой частичной отправки
     """
     try:
-        mailing = Mailing.objects.select_related('message').get(pk=mailing_pk)
+        with transaction.atomic():
+            # Блокируем запись для предотвращения race condition
+            mailing = Mailing.objects.select_related('message') \
+                .select_for_update() \
+                .get(pk=mailing_pk)
 
-        # Проверяем, что рассылка должна быть запущена
-        if mailing.status == 'completed':
-            logger.warning(f"Рассылка {mailing_pk} уже завершена, пропускаем")
-            return
+            # Проверяем статус рассылки
+            if mailing.status not in ['created', 'partially_completed']:
+                logger.warning(f"Рассылка {mailing_pk} в статусе {mailing.status}, пропускаем")
+                return
 
-        # Обновляем статус на "running" перед началом отправки
-        mailing.status = 'running'
-        mailing.save(update_fields=['status'])
+            # Обновляем статус
+            mailing.status = 'running'
+            mailing.last_attempt = timezone.now()
+            mailing.save(update_fields=['status', 'last_attempt'])
 
-        recipients = mailing.recipients.all()
+        # Получаем получателей вне транзакции
+        recipients = mailing.recipients.all().only('email', 'full_name')
         message = mailing.message
         total_sent = 0
         total_failed = 0
 
         for recipient in recipients:
             try:
+                # Отправка письма
                 send_mail(
                     subject=message.subject,
                     message=message.body,
@@ -44,35 +52,44 @@ def send_mailing_task(self, mailing_pk):
                     fail_silently=False,
                 )
 
-                MailingAttempt.objects.create(
-                    mailing=mailing,
-                    recipient=recipient,
-                    status='success',
-                    server_response='200 OK',
-                    attempt_time=timezone.now()
-                )
+                # Логируем успешную попытку
+                with transaction.atomic():
+                    MailingAttempt.objects.create(
+                        mailing=mailing,
+                        recipient=recipient,
+                        status='success',
+                        server_response='200 OK',
+                        attempt_time=timezone.now()
+                    )
                 total_sent += 1
 
             except Exception as e:
                 error_msg = f"{type(e).__name__}: {str(e)}"
-                logger.error(f"Ошибка отправки для {recipient.email}: {error_msg}")
+                logger.error(f"Ошибка для {recipient.email}: {error_msg}")
 
-                MailingAttempt.objects.create(
-                    mailing=mailing,
-                    recipient=recipient,
-                    status='failed',
-                    server_response=error_msg,
-                    attempt_time=timezone.now()
-                )
+                # Логируем неудачную попытку
+                with transaction.atomic():
+                    MailingAttempt.objects.create(
+                        mailing=mailing,
+                        recipient=recipient,
+                        status='failed',
+                        server_response=error_msg,
+                        attempt_time=timezone.now()
+                    )
                 total_failed += 1
 
-        # Финализируем статус рассылки
-        if total_failed == 0:
-            mailing.status = 'completed'
-        else:
-            mailing.status = 'partially_completed'  # Можно добавить этот статус в модель
+        # Финализируем статус
+        with transaction.atomic():
+            mailing.refresh_from_db()
+            if total_failed == 0:
+                mailing.status = 'completed'
+            elif total_sent > 0:
+                mailing.status = 'partially_completed'
+            else:
+                mailing.status = 'failed'
 
-        mailing.save(update_fields=['status'])
+            mailing.last_attempt = timezone.now()
+            mailing.save(update_fields=['status', 'last_attempt'])
 
         logger.info(
             f"Рассылка {mailing_pk} завершена. "
@@ -80,16 +97,25 @@ def send_mailing_task(self, mailing_pk):
         )
 
         return {
-            'total_sent': total_sent,
-            'total_failed': total_failed,
-            'mailing_id': mailing_pk
+            'status': 'completed',
+            'mailing_id': mailing_pk,
+            'success_count': total_sent,
+            'failed_count': total_failed,
+            'timestamp': timezone.now().isoformat()
         }
 
     except Mailing.DoesNotExist:
         logger.error(f"Рассылка {mailing_pk} не найдена")
         raise
     except Exception as e:
-        logger.critical(f"Критическая ошибка в задаче: {str(e)}")
-        mailing.status = 'failed'
-        mailing.save(update_fields=['status'])
+        logger.critical(f"Критическая ошибка: {str(e)}", exc_info=True)
+        try:
+            with transaction.atomic():
+                mailing = Mailing.objects.get(pk=mailing_pk)
+                mailing.status = 'failed'
+                mailing.last_attempt = timezone.now()
+                mailing.save(update_fields=['status', 'last_attempt'])
+        except Exception:
+            logger.error("Не удалось обновить статус рассылки после ошибки")
+
         raise self.retry(exc=e, countdown=60)

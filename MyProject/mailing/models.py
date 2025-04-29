@@ -21,6 +21,7 @@ class Recipient(models.Model):
 class Mailing(models.Model):
     """Модель рассылки с настройками отправки."""
     start_time = models.DateTimeField(verbose_name='Дата и время первой отправки')
+    last_attempt = models.DateTimeField(null=True, blank=True, verbose_name='Последняя попытка')
     end_time = models.DateTimeField(verbose_name='Дата и время окончания отправки')
     status = models.CharField(
         max_length=20,
@@ -57,6 +58,13 @@ class MailingAttempt(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Рассылка',
         related_name='attempts'
+    )
+    recipient = models.ForeignKey(  # Добавляем связь с получателем
+        Recipient,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Получатель'
     )
     attempt_time = models.DateTimeField(
         auto_now_add=True,

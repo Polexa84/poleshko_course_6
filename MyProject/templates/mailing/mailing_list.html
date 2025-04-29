@@ -20,11 +20,11 @@
                     <div class="d-flex flex-wrap gap-3 mb-2">
                         <div>
                             <small class="text-muted">Начало:</small>
-                            <div>{{ mailing.start_time }}</div>
+                            <div>{{ mailing.start_time|date:"d.m.Y H:i" }}</div>
                         </div>
                         <div>
                             <small class="text-muted">Окончание:</small>
-                            <div>{{ mailing.end_time }}</div>
+                            <div>{{ mailing.end_time|date:"d.m.Y H:i" }}</div>
                         </div>
                         <div>
                             <small class="text-muted">Статус:</small>
@@ -35,6 +35,10 @@
                                 {% endif %}">
                                 {{ mailing.get_status_display }}
                             </span>
+                        </div>
+                        <div>
+                            <small class="text-muted">Получателей:</small>
+                            <div>{{ mailing.recipients.count }}</div>
                         </div>
                     </div>
                 </div>
@@ -47,10 +51,15 @@
                        class="btn btn-danger btn-sm">
                         <i class="fas fa-trash-alt"></i> Удалить
                     </a>
-                    <a href="{% url 'mailing:send_mailing' mailing.pk %}"
-                       class="btn btn-success btn-sm">
+                    {% if mailing.status == 'created' %}
+                    <form action="{% url 'mailing:send_mailing' mailing.pk %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm"
+                            onclick="return confirm('Подтвердите отправку рассылки')">
                         <i class="fas fa-paper-plane"></i> Отправить
-                    </a>
+                        </button>
+                    </form>
+                    {% endif %}
                     <a href="{% url 'mailing:mailing_attempts' mailing.pk %}"
                        class="btn btn-info btn-sm">
                         <i class="fas fa-history"></i> Попытки
