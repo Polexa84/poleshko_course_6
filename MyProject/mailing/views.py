@@ -17,8 +17,14 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def home(request):
-    """Главная страница со статистикой и последними рассылками."""
-    mailings = Mailing.objects.all()  # Берем только последние 5 рассылок
+    """Главная страница с приветствием и кнопкой перехода к статистике."""
+    return render(request, 'home.html')
+
+
+@login_required
+def statistics(request):
+    """Страница со статистикой рассылок."""
+    mailings = Mailing.objects.all()
 
     stats = {
         'total_mailings': mailings.count(),
@@ -38,7 +44,7 @@ def home(request):
     stats.update(attempts_stats)
     stats['success_rate'] = round((stats['success'] / stats['total'] * 100) if stats['total'] > 0 else 0, 2)
 
-    return render(request, 'home.html', {'stats': stats, 'mailings': mailings})
+    return render(request, 'mailing/statistics.html', {'stats': stats, 'mailings': mailings})
 
 
 @login_required
