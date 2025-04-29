@@ -12,9 +12,13 @@ from .tasks import send_mailing_task
 from .services import process_mailing  # Импортируем улучшенную функцию
 from users.utils import is_manager
 import logging
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 
 logger = logging.getLogger(__name__)
 
+@cache_page(60 * 15)  # Кешировать на 15 минут
+@vary_on_cookie  # Разные кеши для разных пользователей
 @login_required
 def home(request):
     """Главная страница с приветствием и кнопкой перехода к статистике."""
