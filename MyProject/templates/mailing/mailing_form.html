@@ -14,7 +14,13 @@
             <label class="form-label">{{ form.start_time.label }}</label>
             {{ form.start_time }}
             {% if form.start_time.errors %}
-            <div class="alert alert-danger mt-1">{{ form.start_time.errors }}</div>
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.start_time.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
             {% endif %}
         </div>
 
@@ -23,27 +29,43 @@
             <label class="form-label">{{ form.end_time.label }}</label>
             {{ form.end_time }}
             {% if form.end_time.errors %}
-            <div class="alert alert-danger mt-1">{{ form.end_time.errors }}</div>
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.end_time.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
             {% endif %}
         </div>
 
-        <!-- Статус (только для редактирования) -->
-        {% if form.instance.pk %}
+        <!-- Статус -->
         <div class="mb-3">
             <label class="form-label">{{ form.status.label }}</label>
             {{ form.status }}
             {% if form.status.errors %}
-            <div class="alert alert-danger mt-1">{{ form.status.errors }}</div>
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.status.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
             {% endif %}
         </div>
-        {% endif %}
 
         <!-- Сообщение -->
         <div class="mb-3">
             <label class="form-label">{{ form.message.label }}</label>
             {{ form.message }}
             {% if form.message.errors %}
-            <div class="alert alert-danger mt-1">{{ form.message.errors }}</div>
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.message.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
             {% endif %}
         </div>
 
@@ -61,7 +83,13 @@
                 {% endfor %}
             </div>
             {% if form.recipients.errors %}
-            <div class="alert alert-danger mt-1">{{ form.recipients.errors }}</div>
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.recipients.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
             {% endif %}
         </div>
 
@@ -75,5 +103,18 @@
             </a>
         </div>
     </form>
+
+{% if form.errors %}
+<div class="alert alert-danger mt-3">
+    <ul>
+        {% for field in form %}
+            {% if field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ field.errors|join:", " }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
 </div>
 {% endblock %}

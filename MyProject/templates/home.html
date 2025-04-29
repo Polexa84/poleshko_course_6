@@ -16,15 +16,15 @@
                     <ul class="list-group">
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Всего рассылок
-                            <span class="badge bg-primary rounded-pill">{{ total_mailings }}</span>
+                            <span class="badge bg-primary rounded-pill">{{ stats.total_mailings }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Активных рассылок
-                            <span class="badge bg-success rounded-pill">{{ active_mailings }}</span>
+                            <span class="badge bg-success rounded-pill">{{ stats.active_mailings }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Уникальных получателей
-                            <span class="badge bg-info rounded-pill">{{ unique_recipients }}</span>
+                            <span class="badge bg-info rounded-pill">{{ stats.unique_recipients }}</span>
                         </li>
                     </ul>
                 </div>
@@ -40,19 +40,19 @@
                     <ul class="list-group">
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Всего попыток
-                            <span class="badge bg-primary rounded-pill">{{ total_attempts }}</span>
+                            <span class="badge bg-primary rounded-pill">{{ stats.total }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Успешных
-                            <span class="badge bg-success rounded-pill">{{ successful_attempts }}</span>
+                            <span class="badge bg-success rounded-pill">{{ stats.success }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Неуспешных
-                            <span class="badge bg-danger rounded-pill">{{ failed_attempts }}</span>
+                            <span class="badge bg-danger rounded-pill">{{ stats.failed }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Процент успешных
-                            <span class="badge bg-warning rounded-pill">{{ success_rate }}%</span>
+                            <span class="badge bg-warning rounded-pill">{{ stats.success_rate }}%</span>
                         </li>
                     </ul>
                 </div>
@@ -65,22 +65,17 @@
             <h2>Последние рассылки</h2>
         </div>
         <div class="card-body">
-            {% if recent_mailings %}
-                <div class="list-group">
-                    {% for mailing in recent_mailings %}
-                        <a href="{% url 'mailing:mailing_detail' mailing.pk %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">Рассылка #{{ mailing.pk }}</h5>
-                                <small class="text-muted">{{ mailing.created_at|date:"d.m.Y H:i" }}</small>
-                            </div>
-                            <p class="mb-1">Статус: {{ mailing.get_status_display }}</p>
-                            <small>Сообщение: {{ mailing.message.subject|truncatechars:50 }}</small>
+            <ul>
+                {% for mailing in mailings %}
+                    <li>
+                        <a href="{% url 'mailing:mailing_detail' mailing.pk %}">
+                            {{ mailing.title }} — {{ mailing.get_status_display }} — {{ mailing.start_time|date:"d.m.Y H:i" }}
                         </a>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>Нет данных о рассылках</p>
-            {% endif %}
+                    </li>
+                {% empty %}
+                    <li>Нет доступных рассылок</li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 {% endblock %}
