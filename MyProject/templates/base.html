@@ -62,21 +62,32 @@
                     </li>
                 </ul>
 
-                {# Кнопки регистрации и входа/выхода #}
+                {# Кнопки регистрации, входа, профиля и выхода #}
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:profile' %}" title="Мой профиль">
+                                <i class="fas fa-user-circle"></i> Профиль
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <form method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-link nav-link">Выйти</button>
+                                <button type="submit" class="btn btn-link nav-link" title="Выйти">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </button>
                             </form>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'users:register' %}">Регистрация</a>
+                            <a class="nav-link" href="{% url 'users:register' %}" title="Зарегистрироваться">
+                                <i class="fas fa-user-plus"></i> Регистрация
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Войти</a>
+                            <a class="nav-link" href="{% url 'login' %}" title="Войти в систему">
+                                <i class="fas fa-sign-in-alt"></i> Войти
+                            </a>
                         </li>
                     {% endif %}
                 </ul>

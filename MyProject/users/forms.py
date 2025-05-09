@@ -3,10 +3,39 @@ from django.contrib.auth.forms import (
     UserCreationForm,
     AuthenticationForm,
     PasswordResetForm,
-    SetPasswordForm
+    SetPasswordForm,
+    UserChangeForm
 )
 from django.utils.translation import gettext_lazy as _
 from .models import User
+
+
+class UserProfileForm(UserChangeForm):
+    password = None
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'phone', 'avatar')
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'username': _('Логин'),
+            'email': _('Email'),
+            'first_name': _('Имя'),
+            'last_name': _('Фамилия'),
+            'phone': _('Телефон'),
+            'avatar': _('Аватар'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({'class': 'form-control'})
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(

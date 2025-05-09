@@ -12,6 +12,9 @@ from .forms import CustomPasswordResetForm
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
+from .forms import UserProfileForm
+from django.contrib.auth.decorators import login_required
+from .models import User
 
 class MyPasswordResetView(PasswordResetView):
     form_class = CustomPasswordResetForm
@@ -117,3 +120,23 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'Вы вышли из системы.')  # Сообщение об успешном выходе
     return redirect('home')
+
+@login_required
+def profile_view(request):
+    """Контроллер просмотра профиля"""
+    return render(request, 'users/profile.html', {'user': request.user})
+
+
+@login_required
+def profile_edit(request):
+    """Контроллер редактирования профиля"""
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Профиль успешно обновлен')
+            return redirect('users:profile')
+    else:
+        form = UserProfileForm(instance=request.user)
+
+    return render(request, 'users/profile_edit.html', {'form': form})
