@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>{% block title %}Мой проект{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+          integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+</head>
+<body>
+    {# Блок для системных сообщений #}
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">РассылкOff</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="recipientsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Получатели
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="recipientsDropdown">
+                            <li><a class="dropdown-item" href="{% url 'mailing:recipient_list' %}">Список получателей</a></li>
+                            <li><a class="dropdown-item" href="{% url 'mailing:recipient_create' %}">Добавить получателя</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="mailingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Рассылки
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="mailingsDropdown">
+                            <li><a class="dropdown-item" href="{% url 'mailing:mailing_list' %}">Список рассылок</a></li>
+                            <li><a class="dropdown-item" href="{% url 'mailing:mailing_create' %}">Добавить рассылку</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Сообщения
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="messagesDropdown">
+                            <li><a class="dropdown-item" href="{% url 'postal_service:message_list' %}">Список сообщений</a></li>
+                            <li><a class="dropdown-item" href="{% url 'postal_service:message_create' %}">Добавить сообщение</a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                {# Кнопки регистрации, входа, профиля и выхода #}
+                <ul class="navbar-nav ms-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:profile' %}" title="Мой профиль">
+                                <i class="fas fa-user-circle"></i> Профиль
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link nav-link" title="Выйти">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:register' %}" title="Зарегистрироваться">
+                                <i class="fas fa-user-plus"></i> Регистрация
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}" title="Войти в систему">
+                                <i class="fas fa-sign-in-alt"></i> Войти
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

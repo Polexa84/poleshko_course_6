@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block title %}Рассылка уже отправлена{% endblock %}
+
+{% block content %}
+    <h1>Рассылка уже отправлена</h1>
+    <p>Эта рассылка уже была отправлена.</p>
+    <a href="{% url 'mailing:mailing_list' %}" class="btn btn-secondary">Вернуться к списку рассылок</a>
+{% endblock %}

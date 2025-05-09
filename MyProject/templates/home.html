@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load cache %}
+
+{% block title %}Главная страница{% endblock %}
+
+{% block content %}
+    {% cache 600 home_content request.user.username %}
+    <div class="container mt-5">
+        <h1>Добро пожаловать на Сайт РассылкOff</h1>
+        <p>Удобное управление рассылками и аналитика.</p>
+
+        <a href="{% url 'mailing:statistics' %}" class="btn btn-success btn-lg">Посмотреть статистику</a>
+    </div>
+    {% endcache %}
+{% endblock %}

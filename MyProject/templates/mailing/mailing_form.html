@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Редактировать{% else %}Создать{% endif %} рассылку{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">{% if form.instance.pk %}Редактировать{% else %}Создать{% endif %} рассылку</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Дата начала -->
+        <div class="mb-3">
+            <label class="form-label">{{ form.start_time.label }}</label>
+            {{ form.start_time }}
+            {% if form.start_time.errors %}
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.start_time.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Дата окончания -->
+        <div class="mb-3">
+            <label class="form-label">{{ form.end_time.label }}</label>
+            {{ form.end_time }}
+            {% if form.end_time.errors %}
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.end_time.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Статус -->
+        <div class="mb-3">
+            <label class="form-label">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% if form.status.errors %}
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.status.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Сообщение -->
+        <div class="mb-3">
+            <label class="form-label">{{ form.message.label }}</label>
+            {{ form.message }}
+            {% if form.message.errors %}
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.message.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Получатели (чекбоксы) -->
+        <div class="mb-4">
+            <label class="form-label">{{ form.recipients.label }}</label>
+            <div class="border p-3 bg-light">
+                {% for checkbox in form.recipients %}
+                <div class="form-check">
+                    {{ checkbox.tag }}
+                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                        {{ checkbox.choice_label }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            {% if form.recipients.errors %}
+            <div class="alert alert-danger mt-1">
+                <ul>
+                    {% for error in form.recipients.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Кнопки -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save me-1"></i> Сохранить
+            </button>
+            <a href="{% url 'mailing:mailing_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Назад к списку
+            </a>
+        </div>
+    </form>
+
+{% if form.errors %}
+<div class="alert alert-danger mt-3">
+    <ul>
+        {% for field in form %}
+            {% if field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ field.errors|join:", " }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}
