@@ -1,14 +1,13 @@
 from django.db import models
 from postal_service.models import Message
-from django.contrib.auth.models import User  # Импортируем User
-
+from django.conf import settings
 
 class Recipient(models.Model):
     """Модель получателя рассылки."""
     email = models.EmailField(unique=True, verbose_name="Email")
     full_name = models.CharField(max_length=255, verbose_name="Ф.И.О.")
     comment = models.TextField(blank=True, null=True, verbose_name="Комментарий")
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Владелец")  # Добавляем поле owner
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Владелец")  # Добавляем поле owner
 
     def __str__(self):
         return self.email
@@ -36,7 +35,7 @@ class Mailing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     message = models.ForeignKey(Message, on_delete=models.CASCADE, verbose_name='Сообщение')
     recipients = models.ManyToManyField(Recipient, verbose_name='Получатели')
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Владелец")  # Добавляем поле owner
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Владелец")  # Добавляем поле owner
 
     def __str__(self):
         return f"Рассылка #{self.pk}"

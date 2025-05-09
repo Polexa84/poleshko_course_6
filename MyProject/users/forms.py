@@ -3,16 +3,21 @@ from django.contrib.auth.forms import (
     UserCreationForm,
     AuthenticationForm,
     PasswordResetForm,
-    SetPasswordForm  # Новый импорт
+    SetPasswordForm
 )
 from django.utils.translation import gettext_lazy as _
-
+from .models import User
 
 class RegisterForm(UserCreationForm):
-    email = forms.EmailField(label="Email", required=True)
+    email = forms.EmailField(
+        label="Email",
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control'})
+    )
 
-    class Meta(UserCreationForm.Meta):
-        fields = UserCreationForm.Meta.fields + ('email',)
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -23,9 +28,18 @@ class RegisterForm(UserCreationForm):
         'password_too_short': _("Ваш пароль слишком короткий."),
         'password_too_common': _("Ваш пароль слишком распространен."),
         'password_entirely_numeric': _("Ваш пароль не может состоять только из цифр."),
-        'invalid_email': _("Введите правильный адрес электронной почты.")
+        'invalid_email': _("Введите правильный адрес электронной почты."),
+        'unique_email': _("Пользователь с таким email уже существует.")
     }
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                self.error_messages['unique_email'],
+                code='unique_email',
+            )
+        return email
 
 class LoginForm(AuthenticationForm):
     error_messages = {
@@ -41,12 +55,10 @@ class LoginForm(AuthenticationForm):
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': 'form-control'})
 
-
 class CustomPasswordResetForm(PasswordResetForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update({'class': 'form-control'})
-
 
 class CustomSetPasswordForm(SetPasswordForm):
     def __init__(self, *args, **kwargs):
