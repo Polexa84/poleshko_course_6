@@ -13,8 +13,12 @@ class Recipient(models.Model):
         return self.email
 
     class Meta:
-        verbose_name = "Получатель"
-        verbose_name_plural = "Получатели"
+        verbose_name = 'Получатель'
+        verbose_name_plural = 'Получатели'
+        permissions = [
+            ('view_all_recipients', 'Может просматривать всех получателей'),
+            ('block_recipient', 'Может блокировать получателей'),
+        ]
 
 
 class Mailing(models.Model):
@@ -43,7 +47,10 @@ class Mailing(models.Model):
     class Meta:
         verbose_name = 'Рассылка'
         verbose_name_plural = 'Рассылки'
-
+        permissions = [
+            ('view_all_mailings', 'Может просматривать все рассылки'),
+            ('disable_mailing', 'Может отключать рассылки'),
+        ]
 
 class MailingAttempt(models.Model):
     """Модель для хранения результатов попытки отправки рассылки."""

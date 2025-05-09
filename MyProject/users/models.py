@@ -14,6 +14,10 @@ class User(AbstractUser):
         default=False,
         verbose_name=_('Подтверждён')
     )
+    is_blocked = models.BooleanField(
+        default=False,
+        verbose_name=_('Заблокирован')
+    )
     phone = models.CharField(
         max_length=20,
         blank=True,
@@ -50,3 +54,6 @@ class User(AbstractUser):
     class Meta:
         verbose_name = _('Пользователь')
         verbose_name_plural = _('Пользователи')
+        permissions = [
+            ('block_user', _('Может блокировать пользователей')),
+        ]
