@@ -76,18 +76,25 @@ def recipient_list(request):
 
 @login_required
 def recipient_create(request):
-    """Создание получателя."""
     if request.method == 'POST':
         form = RecipientForm(request.POST)
         if form.is_valid():
-            recipient = form.save(commit=False)
-            recipient.owner = request.user
-            recipient.save()
-            messages.success(request, 'Получатель успешно создан')
-            return redirect('mailing:recipient_list')
+            try:
+                recipient = form.save(commit=False)
+                recipient.owner = request.user
+                recipient.save()
+                messages.success(request, 'Получатель успешно создан')
+                return redirect('mailing:recipient_list')
+            except Exception as e:
+                logger.error(f"Error creating recipient: {str(e)}")
+                messages.error(request, 'Ошибка при создании получателя')
     else:
         form = RecipientForm()
-    return render(request, 'mailing/recipient_form.html', {'form': form})
+
+    return render(request, 'mailing/recipient_form.html', {
+        'form': form,
+        'title': 'Создание получателя'
+    })
 
 
 @login_required
@@ -135,19 +142,26 @@ def mailing_list(request):
 
 @login_required
 def mailing_create(request):
-    """Создание рассылки."""
     if request.method == 'POST':
         form = MailingForm(request.POST, user=request.user)
         if form.is_valid():
-            mailing = form.save(commit=False)
-            mailing.owner = request.user
-            mailing.save()
-            form.save_m2m()
-            messages.success(request, 'Рассылка успешно создана')
-            return redirect('mailing:mailing_list')
+            try:
+                mailing = form.save(commit=False)
+                mailing.owner = request.user
+                mailing.save()
+                form.save_m2m()  # Для ManyToMany полей
+                messages.success(request, 'Рассылка успешно создана')
+                return redirect('mailing:mailing_list')
+            except Exception as e:
+                logger.error(f"Error creating mailing: {str(e)}")
+                messages.error(request, 'Ошибка при создании рассылки')
     else:
         form = MailingForm(user=request.user)
-    return render(request, 'mailing/mailing_form.html', {'form': form})
+
+    return render(request, 'mailing/mailing_form.html', {
+        'form': form,
+        'title': 'Создание рассылки'
+    })
 
 
 @login_required
